@@ -66,7 +66,7 @@ git merge lab1-dev
 
 绝大多数代码都使用C语言完成，部分代码需要使用汇编语言编写，建议大家掌握AArch64汇编的下面内容
 
-指令手册：[Arm Architecture Reference Manual Armv8, for A-profile architecture](https://developer.arm.com/documentation/ddi0487/gb)
+指令手册：[Arm Architecture Reference Manual for A-profile architecture](https://developer.arm.com/documentation/ddi0487/latest/)
 
 * 各通用寄存器及其别名、函数调用约定、栈结构
 
