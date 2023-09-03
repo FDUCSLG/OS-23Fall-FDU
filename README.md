@@ -24,3 +24,5 @@ Reference:
 - [Arm® Instruction Set Reference Guide](https://ipads.se.sjtu.edu.cn/courses/os/reference/arm_isa.pdf)
 - [ARM Cortex-A Series Programmer’s Guide for ARMv8-A](https://cs140e.sergio.bz/docs/ARMv8-A-Programmer-Guide.pdf)
 - [ARM GCC Inline Assembler Cookbook](https://www.ic.unicamp.br/~celio/mc404-s2-2015/docs/ARM-GCC-Inline-Assembler-Cookbook.pdf)
+- [ucore step-by-step](https://1790865014.gitbook.io/ucore-step-by-step/)
+- [ucore实验指导书](https://chyyuu.gitbooks.io/ucore_os_docs/content/)
