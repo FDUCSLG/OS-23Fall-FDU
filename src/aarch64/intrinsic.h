@@ -217,3 +217,5 @@ static ALWAYS_INLINE NO_RETURN void arch_stop_cpu() {
 }
 
 void delay_us(u64 n);
+
+#define set_return_addr(addr) (compiler_fence(), ((volatile u64*)__builtin_frame_address(0))[1] = (u64)(addr), compiler_fence())

@@ -1,8 +1,7 @@
 #pragma once
 
-// #include <common/defines.h>
+#include <common/defines.h>
 typedef unsigned long long u64;
-
 #define PAGE_SIZE 4096
 
 /* memory region attributes */
@@ -63,5 +62,5 @@ typedef PTEntry *PTEntriesPtr;
 #define PTE_ADDRESS(pte)   ((pte) & ~0xFFFF000000000FFF)
 #define PTE_FLAGS(pte)  ((pte) & 0xFFFF000000000FFF)
 #define P2N(addr) (addr>>12)
-#define PAGE_BASE(addr) (addr & ~(PAGE_SIZE - 1))
+#define PAGE_BASE(addr) ((u64)addr & ~(PAGE_SIZE - 1))
 
