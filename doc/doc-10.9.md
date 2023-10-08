@@ -4,6 +4,8 @@
 
 ## 时钟中断
 
+（异常处理和异常向量表部分更详细的介绍可以去看仓库里面的 trap.explained.md）
+
 ### 异常处理
 
 *更详细的介绍可以参考文档 aarch64_exception_and_interrupt_handling_100933_0100_en.pdf 的 9*
@@ -41,7 +43,9 @@ Control register for the EL1 physical timer.
 
 <img src="images/image-20231007122035620.png" alt="image-20231007122035620" style="zoom:80%;" />
 
-
+> Disabling interrupts means that you have disabled the source of interrupt.
+> Masking means that you(CPU) are not going to handle the interrupts until it is
+> unmasked.（interrupt controller 里面有一个队列）
 
 #### CNTPCT_EL0
 
@@ -50,6 +54,12 @@ Holds the 64-bit physical count value.
 可以理解为该寄存器中的值会以固定频率+1
 
 <img src="images/image-20231007153449959.png" alt="image-20231007153449959" style="zoom:80%;" />
+
+#### CNTP_CVAL_EL0
+
+Holds the compare value for the EL1 physical timer.
+
+<img src="images/image-20231008104624633.png" alt="image-20231008104624633" style="zoom:80%;" />
 
 #### CNTP_TVAL_EL0
 
@@ -129,7 +139,7 @@ Holds the timer value for the EL1 physical timer.
 
 - **SH**
 
-共享属性
+共享属性（考虑多CPU的系统）
 
 <img src="images/image-20231007111120284.png" alt="image-20231007111120284" style="zoom:80%;" />
 
@@ -159,7 +169,4 @@ x/1xg 0x81000
 x/1xg 0x81000
 0x81000:        0x0000000000092003
 
-翻译地址时，去物理地址 0x0000000000092000 查 1 级页表（但这里根本不是 1 级页表，而是全 0），无法完成地址翻译，无法继续执行。
-
-
-
+翻译地址时，去物理地址 0x0000000000092000 查 1 级页表（但这里根本不是 1 级页表（1 级页表在 0x0000000000082000）而是全 0），无法完成地址翻译，无法继续执行。
