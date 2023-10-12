@@ -1,7 +1,7 @@
 #pragma once
 
 #include <common/defines.h>
-typedef unsigned long long u64;
+
 #define PAGE_SIZE 4096
 
 /* memory region attributes */
@@ -62,5 +62,9 @@ typedef PTEntry *PTEntriesPtr;
 #define PTE_ADDRESS(pte)   ((pte) & ~0xFFFF000000000FFF)
 #define PTE_FLAGS(pte)  ((pte) & 0xFFFF000000000FFF)
 #define P2N(addr) (addr>>12)
-#define PAGE_BASE(addr) ((u64)addr & ~(PAGE_SIZE - 1))
+#define PAGE_BASE(addr) (addr & ~(PAGE_SIZE - 1))
 
+#define VA_PART0(va) (((u64)(va) & 0xFF8000000000) >> 39)
+#define VA_PART1(va) (((u64)(va) & 0x7FC0000000) >> 30)
+#define VA_PART2(va) (((u64)(va) & 0x3FE00000) >> 21)
+#define VA_PART3(va) (((u64)(va) & 0x1FF000) >> 12)

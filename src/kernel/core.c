@@ -21,8 +21,12 @@ NO_RETURN void idle_entry() {
 }
 
 NO_RETURN void kernel_entry() {
-    printk("Hello world\n");
-    proc_test();
+    printk("hello world %d\n", (int)sizeof(struct proc));
+
+    // proc_test();
+    vm_test();
+    user_proc_test();
+    
     do_rest_init();
 
     while (1)
