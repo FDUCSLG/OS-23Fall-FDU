@@ -48,7 +48,7 @@ bool is_unused(struct proc* p)
 {
     bool r;
     _acquire_sched_lock();
-    r = p->state == ZOMBIE;
+    r = p->state == UNUSED;
     _release_sched_lock();
     return r;
 }
