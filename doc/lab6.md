@@ -1,4 +1,4 @@
-# OS Lab 6 - Intro to Logging FS & Block Device Cache
+# OS Lab 6 - Intro to Log FS & Block Device Cache
 
 本次实验的目的是熟悉日志文件系统和块设备缓存的实现。
 
@@ -8,6 +8,25 @@
 >
 > - 聊聊 xv6 中的文件系统：https://www.cnblogs.com/KatyuMarisaBlog/p/14366115.html
 > - xv6 中文文档：https://th0ar.gitbooks.io/xv6-chinese/content/content/chapter6.html
+
+## 0. 更新
+
+> **来源**
+>
+> 本部分来自 [2022 年的实验](https://github.com/FDUCSLG/OS-2022Fall-Fudan/blob/lab6/doc/lab6.md)。为方便大家实现，今年加入了一样的机制。**需要大家阅读后对之前的代码进行微调。**
+
+
+为便于实现 Lab 6，添加了一套 Unalertable Waiting 机制，可供大家使用。
+
+* 为 `wait_sem` 等一系列函数添加了编译检查，未处理返回值将编译失败。
+  
+  > **在 `wait_sem` 返回 `false` 后，应尽快返回用户态以处理 signal（killed），严禁再次 wait。** （为什么？）在 Lab 3、4、5 中，我们均未对是否正确处理 wait 被打断的情况作出要求，**从 Lab 6 开始，这一点将被纳入打分标准**。
+
+* 添加了一套以 `unalertable_wait_sem` 为代表的函数，unalertable wait 不会被 signal（kill）打断，也没有返回值，**但请严格限制使用，保证 unalertable wait 能够在可预见的短时间内被唤醒，确保 kill 操作的时效性。** 关于 unalertable wait 的更多说明，请参考代码。
+
+* 为实现 unalertable wait，参考 Linux 的 uninterruptable wait，我们为 `procstate` 添加了一项 `DEEPSLEEPING`，`DEEPSLEEPING` 与 `SLEEPING` 基本相同，区别仅在于 alert 操作对 `DEEPSLEEPING` 无效。**你需要在调度器相关代码中将 `DEEPSLEEPING` 纳入考虑。** 除 activate 操作外，一般可以将 `DEEPSLEEPING` 视为 `SLEEPING` 处理。
+
+* 将原先的 `activate_proc` 重命名为 `_activate_proc`，添加了参数 `onalert`，以指出是正常唤醒还是被动打断，并用宏定义 `activate_proc` 为 `onalert = false` 的 `_activate_proc`，`alert_proc` 为 `onalert=true` 的`_activate_proc`。**你需要修改 `_activate_proc` 的代码，并在 `kill` 中换用 `alert_proc` 唤醒进程。**
 
 ## 1. 文件系统扫盲
 ### 1.1. 从磁盘到块设备抽象
