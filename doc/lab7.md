@@ -1,4 +1,4 @@
-# OS Lab 6 - Inode-based File System
+# OS Lab 7 - Inode-based File System
 
 本次实验的目的是熟悉基于 Inode 的文件系统，实现一些基础的底层操作。
 

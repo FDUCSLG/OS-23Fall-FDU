@@ -10,8 +10,6 @@
  */
 #define ROOT_INODE_NO 1
 
-struct InodeTree;
-
 /**
     @brief an inode in memory.
 
@@ -24,7 +22,7 @@ typedef struct {
         @brief the lock protecting the inode metadata and its content.
 
         @note it does NOT protect `rc`, `node`, `valid`, etc, because they are
-        "runtime" variables, not filesystem "metadata" or "data" of the inode.
+        "runtime" variables, not "filesystem" metadata or data of the inode.
      */
     SleepLock lock;
 
@@ -32,13 +30,13 @@ typedef struct {
         @brief the reference count of this inode.
 
         Different from `Block`, an inode can be shared by multiple threads or
-        processes. So we need a reference count to track the number of
+        processes, so we need a reference count to track the number of
         references to this inode.
      */
     RefCount rc;
 
     /**
-        @brief list this inode into a linked list.
+        @brief link this inode into a linked list.
      */
     ListNode node;
 
@@ -128,8 +126,7 @@ typedef struct {
         
         This method should increment the reference count of the inode by one.
 
-        @note it does not load the inode from disk if it is not loaded
-        before!
+        @note it does NOT have to load the inode from disk!
 
         @see `sync` will be responsible to load the content of inode.
         
@@ -173,7 +170,7 @@ typedef struct {
 
         @note do not forget `kfree(inode)` after you have done them all!
 
-        @note caller must NOT hold the lock of `inode`.
+        @note caller must NOT hold the lock of `inode`. i.e. caller should have `unlock`ed it.
 
         @see `get` - the counterpart of this method.
 

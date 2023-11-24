@@ -7,7 +7,7 @@
     @brief the private reference to the super block.
 
     @note we need these two variables because we allow the caller to
-            specify the block device and super block to use.
+            specify the block cache and super block to use.
             Correspondingly, you should NEVER use global instance of
             them.
 
@@ -34,7 +34,7 @@ static SpinLock lock;
 
     We use a linked list to manage all allocated inodes.
 
-    You can implement your own data structure if you like better performance.
+    You can implement your own data structure if you want better performance.
 
     @see Inode
  */
@@ -130,8 +130,8 @@ static void inode_put(OpContext* ctx, Inode* inode) {
 /**
     @brief get which block is the offset of the inode in.
 
-    e.g. `inode_map(ctx, my_inode, 1234, &modified)` will return the block
-    number of the block that contains the 1234th byte of the file
+    e.g. `inode_map(ctx, my_inode, 1234, &modified)` will return the block_no
+    of the block that contains the 1234th byte of the file
     represented by `my_inode`.
 
     If a block has not been allocated for that byte, `inode_map` will
