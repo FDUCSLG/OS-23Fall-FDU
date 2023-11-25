@@ -88,7 +88,7 @@ typedef struct {
         This method should be called before any write operation to `inode` and its
         file content.
 
-        @throw panic if `inode` is not valid.
+        If the inode has not been loaded, this method should load it from disk.
 
         @see `unlock` - the counterpart of this method.
      */
