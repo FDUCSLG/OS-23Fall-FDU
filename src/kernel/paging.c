@@ -26,7 +26,11 @@ void free_sections(struct pgdir *pd) {
 }
 
 u64 sbrk(i64 size) {
-    // TODO
+    // TODO:
+    // Increase the heap size of current process by `size`
+    // If `size` is negative, decrease heap size
+    // `size` must be a multiple of PAGE_SIZE
+    // Return the previous heap_end
 }
 
 int pgfault_handler(u64 iss) {
@@ -34,5 +38,9 @@ int pgfault_handler(u64 iss) {
     struct pgdir *pd = &p->pgdir;
     u64 addr = arch_get_far(); // Attempting to access this address caused the
                                // page fault
-    // TODO
+    // TODO:
+    // 1. Find the section struct that contains the faulting address `addr`
+    // 2. Check section flags to determine page fault type
+    // 3. Handle the page fault accordingly
+    // 4. Return to user code or kill the process
 }
