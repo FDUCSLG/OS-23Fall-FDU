@@ -157,23 +157,6 @@ Flags 如下：
 #define ST_BSS    ST_FILE // Section is bss
 ```
 
-#### 有关的函数
-
-```c
-int pgfault_handler(u64 iss) {
-    struct proc *p = thisproc();
-    struct pgdir *pd = &p->pgdir;
-    u64 addr = arch_get_far(); // Attempting to access this address caused the page fault
-    // TODO:
-    // 1. Find the section struct that contains the faulting address `addr`
-    // 2. Check section flags to determine page fault type
-    // 3. Handle the page fault accordingly
-    // 4. Return to user code or kill the process
-}
-```
-
-这是缺页异常处理程序，在`trap_global_handler`中，我们需要判断trap是否是缺页异常，如果是，则交由这个函数处理。
-
 ### 任务一：准备用户程序堆并实现 `sbrk()` 系统调用
 
 #### 用户程序堆
@@ -223,6 +206,42 @@ u64 sbrk(i64 size);
 2. 如果进程需要对全零页进行**写入**操作时，会触发缺页异常。同样地，我们可以在缺页异常处理程序中判定这是否是 Copy on Write 的情形。
 3. 如果是，我们分配一个新的页，将共享全零页的内容拷贝过去（也就是将新的页全设为零），然后将新页map给用户进程，再返回用户进程继续执行即可。
 4. 如果不是，则这是一个非法内存访问，应该杀死用户进程并报错。
+
+#### 有关的函数
+
+```c
+int pgfault_handler(u64 iss) {
+    struct proc *p = thisproc();
+    struct pgdir *pd = &p->pgdir;
+    u64 addr = arch_get_far(); // Attempting to access this address caused the page fault
+    // TODO:
+    // 1. Find the section struct that contains the faulting address `addr`
+    // 2. Check section flags to determine page fault type
+    // 3. Handle the page fault accordingly
+    // 4. Return to user code or kill the process
+}
+```
+
+这是缺页异常处理程序，在`trap_global_handler`中，我们需要判断trap是否是缺页异常，如果是，则交由这个函数处理。
+
+```c
+void vmmap(struct pgdir *pd, u64 va, void *ka, u64 flags) {
+    // TODO
+    // Map virtual address 'va' to the physical address represented by kernel
+    // address 'ka' in page directory 'pd', 'flags' is the flags for the page
+    // table entry
+}
+```
+在`pd`中将虚拟地址`va`映射到内核地址`ka`对应的物理地址
+
+```c
+WARN_RESULT void *get_zero_page() {
+    // TODO
+    // Return the shared zero page
+}
+```
+
+返回共享全零页
 
 ### 特别提醒
 

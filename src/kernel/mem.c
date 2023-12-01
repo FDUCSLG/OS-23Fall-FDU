@@ -46,3 +46,8 @@ void kfree_page(void *p) {
 // TODO: kalloc kfree
 
 u64 left_page_cnt() { return PAGE_COUNT - alloc_page_cnt.count; }
+
+WARN_RESULT void *get_zero_page() {
+    // TODO
+    // Return the shared zero page
+}
