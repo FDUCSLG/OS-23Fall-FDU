@@ -2,6 +2,7 @@
 #include <fs/inode.h>
 #include <kernel/mem.h>
 #include <kernel/printk.h>
+#include <sys/stat.h>
 
 /**
     @brief the private reference to the super block.
@@ -228,3 +229,105 @@ InodeTree inodes = {
     .insert = inode_insert,
     .remove = inode_remove,
 };
+
+
+
+/* LabFinal */
+
+/**
+    @brief read the next path element from `path` into `name`.
+    
+    @param[out] name next path element.
+
+    @return const char* a pointer offseted in `path`, without leading `/`. If no
+    name to remove, return NULL.
+
+    @example 
+    skipelem("a/bb/c", name) = "bb/c", setting name = "a",
+    skipelem("///a//bb", name) = "bb", setting name = "a",
+    skipelem("a", name) = "", setting name = "a",
+    skipelem("", name) = skipelem("////", name) = NULL, not setting name.
+ */
+static const char* skipelem(const char* path, char* name) {
+    const char* s;
+    int len;
+
+    while (*path == '/')
+        path++;
+    if (*path == 0)
+        return 0;
+    s = path;
+    while (*path != '/' && *path != 0)
+        path++;
+    len = path - s;
+    if (len >= FILE_NAME_MAX_LENGTH)
+        memmove(name, s, FILE_NAME_MAX_LENGTH);
+    else {
+        memmove(name, s, len);
+        name[len] = 0;
+    }
+    while (*path == '/')
+        path++;
+    return path;
+}
+
+/**
+    @brief look up and return the inode for `path`.
+
+    If `nameiparent`, return the inode for the parent and copy the final
+    path element into `name`.
+    
+    @param path a relative or absolute path. If `path` is relative, it is
+    relative to the current working directory of the process.
+
+    @param[out] name the final path element if `nameiparent` is true.
+
+    @return Inode* the inode for `path` (or its parent if `nameiparent` is true), 
+    or NULL if such inode does not exist.
+
+    @example
+    namex("/a/b", false, name) = inode of b,
+    namex("/a/b", true, name) = inode of a, setting name = "b",
+    namex("/", true, name) = NULL (because "/" has no parent!)
+ */
+static Inode* namex(const char* path,
+                    bool nameiparent,
+                    char* name,
+                    OpContext* ctx) {
+    /* TODO: LabFinal */
+    return 0;
+}
+
+Inode* namei(const char* path, OpContext* ctx) {
+    char name[FILE_NAME_MAX_LENGTH];
+    return namex(path, false, name, ctx);
+}
+
+Inode* nameiparent(const char* path, char* name, OpContext* ctx) {
+    return namex(path, true, name, ctx);
+}
+
+/**
+    @brief get the stat information of `ip` into `st`.
+    
+    @note the caller must hold the lock of `ip`.
+ */
+void stati(Inode* ip, struct stat* st) {
+    st->st_dev = 1;
+    st->st_ino = ip->inode_no;
+    st->st_nlink = ip->entry.num_links;
+    st->st_size = ip->entry.num_bytes;
+    switch (ip->entry.type) {
+        case INODE_REGULAR:
+            st->st_mode = S_IFREG;
+            break;
+        case INODE_DIRECTORY:
+            st->st_mode = S_IFDIR;
+            break;
+        case INODE_DEVICE:
+            st->st_mode = 0;
+            break;
+        default:
+            PANIC();
+    }
+}
