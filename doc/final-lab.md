@@ -1,4 +1,7 @@
 ## File Descriptor
+
+> 本模块内的相关问题推荐联系许冬助教
+
 ### 解释说明
 欢迎来到文件系统的最后一部分！在这一部分，我们将完成和文件（File）以及文件描述符有关的最终实现。
 
@@ -92,7 +95,197 @@ Inode *create(const char *path, short type, short major, short minor, OpContext 
 (5) 别忘了上面「解释说明」中提到的值得注意的地方。
 
 
+## fork() 和 execve()
+
+> 本模块内的相关问题推荐联系赵行健助教
+
+本模块可以说是操作系统最核心的部分，我们的操作系统通过这两个函数加载和启动用户程序。进行本部分任务前，建议先完成File Descriptor。
+
+**<u>TODO</u>**
+
+* `kernel/syscall.c: user_readable user_writeable`
+  
+  检查syscall中由用户程序传入的指针所指向的内存空间是否有效且可被用户程序读写
+- `kernel/proc.c: fork TODO`
+
+- `kernel/exec.c: execve TODO`
+
+- `kernel/pt.c: copyout TODO`（T）
+
+- `kernel/paging.c: copy_sections TODO`（T）
+
+- `kernel/sysfile.c: mmap TODO`（O）
+
+- `kernel/sysfile.c: munmap TODO`（O）
+
+- `kernel/paging.c init_sections`: 不需要再单独初始化 heap 段了
+
+- `kernel/paging.c pgfault`: 增加有关文件的处理逻辑（O）
+
+#### ELF 可执行文件格式
+
+ELF 文件描述了一个程序。它可以看作一个程序的“镜像”，就像ISO文件是一个光盘的“镜像”一样。ELF 文件包含程序的入口地址、各个段的大小、各个段的属性（可读、可写、可执行等）等等。我们按照这些信息，将程序加载到内存中，然后跳转到入口地址，就可以运行这个程序了。
+
+在本部分中，我们需要实现 ELF 文件的解析和加载。ELF 格式的具体定义可以参见 [https://en.wikipedia.org/wiki/Executable_and_Linkable_Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format%EF%BC%8C%E6%8C%89%E7%85%A7) 。在这里，我们给出两个会用到的结构体定义：
+
+相关头文件：`musl/include/elf.h`
+
+```C
+typedef struct {
+unsigned char e_ident[EI_NIDENT];
+    Elf64_Half    e_type;
+    Elf64_Half    e_machine;
+    Elf64_Word    e_version;
+    Elf64_Addr    e_entry;
+    Elf64_Off     e_phoff;
+    Elf64_Off     e_shoff;
+    Elf64_Word    e_flags;
+    Elf64_Half    e_ehsize;
+    Elf64_Half    e_phentsize;
+       Elf64_Half    e_phnum;
+       Elf64_Half    e_shentsize;
+    Elf64_Half    e_shnum;
+    Elf64_Half    e_shstrndx;
+} Elf64_Ehdr;
+
+typedef struct {
+    Elf64_Word    p_type;
+    Elf64_Word    p_flags;
+    Elf64_Off p_offset;
+    Elf64_Addr    p_vaddr;
+    Elf64_Addr    p_paddr;
+    Elf64_Xword   p_filesz;
+    Elf64_Xword   p_memsz;
+    Elf64_Xword   p_align;
+} Elf64_Phdr;
+```
+
+> 注意：ELF 文件中的 section header 和lab的 struct section并不一样，本次实验不用考虑 section header 的情况
+
+#### fork() 系统调用
+
+创建一个当前进程的完整复制，通过`fork()`的返回值区分父进程和子进程
+
+从进程的结构体入手，依次判断其中的变量是否需要复制，是否需要修改
+
+为了配合 fork()，你可能需要在原先的 `UserContext` 中加入所有寄存器的值。此外，你还需要保存`tpidr0`和`q0`，因为musl libc会使用它们。
+
+#### execve() 系统调用
+
+> 替换当前进程为filename所指的 ELF 格式文件，并开始运行该文件（变身）
+> 
+> 需要思考进程的哪些部分需要释放，哪些部分不需要
+
+```C
+int execve(const char* filename, char* const argv[], char* const envp[]) 
+//filename: 标识运行的可执行文件
+//argv: 运行文件的参数（和 main 函数中的 argv 指的是一个东西）
+//envp: 环境变量
+
+//  execve 异常返回到可执行文件的入口，即elf.e_entry（可以认为就是以下格式的main函数），而在main函数看来依然是一般的函数调用
+int main(int argc, char *argv[]) 
+//入口函数，其中argc表示参数的数量，argv表示参数的指针数组，比如ls ..  其中 argc=2， argv[0]:"ls", argv[1]:".."
+
+//example code
+char * argv[ ]={"ls","..",(char *)0};
+char * envp[ ]={"PATH=/bin",(char*)0};
+if(fork()==0)
+    execve("ls", argv, envp);
+else
+
+//user stack structure
+/*
+ * Step1: Load data from the file stored in `path`.
+ * The first `sizeof(struct Elf64_Ehdr)` bytes is the ELF header part.
+ * You should check the ELF magic number and get the `e_phoff` and `e_phnum` which is the starting byte of program header.
+ *
+ * Step2: Load program headers and the program itself
+ * Program headers are stored like: struct Elf64_Phdr phdr[e_phnum];
+ * e_phoff is the offset of the headers in file, namely, the address of phdr[0].
+ * For each program header, if the type(p_type) is LOAD, you should load them:
+ * A naive way is 
+ * (1) allocate memory, va region [vaddr, vaddr+filesz)
+ * (2) copy [offset, offset + filesz) of file to va [vaddr, vaddr+filesz) of memory
+ * Since we have applied dynamic virtual memory management, you can try to only set the file and offset (lazy allocation)
+ * (hints: there are two loadable program headers in most exectuable file at this lab, the first header indicates the text section(flag=RX) and the second one is the data+bss section(flag=RW). You can verify that by check the header flags. The second header has [p_vaddr, p_vaddr+p_filesz) the data section and [p_vaddr+p_filesz, p_vaddr+p_memsz) the bss section which is required to set to 0, you may have to put data and bss in a single struct section. COW by using the zero page is encouraged)
+
+ * Step3: Allocate and initialize user stack.
+ * The va of the user stack is not required to be any fixed value. It can be randomized. (hints: you can directly allocate user stack at one time, or apply lazy allocation)
+ * Push argument strings.
+ * The initial stack may like
+ *   +-------------+
+ *   | envp[m] = 0 |
+ *   +-------------+
+ *   |    ....     |
+ *   +-------------+
+ *   |   envp[0]   |  ignore the envp if you do not want to implement
+ *   +-------------+
+ *   | argv[n] = 0 |  n == argc
+ *   +-------------+
+ *   |    ....     |
+ *   +-------------+
+ *   |   argv[0]   |
+     +-------------+
+     |    argv     | pointer to the argv[0]
+ *   +-------------+
+ *   |    argc     |
+ *   +-------------+  <== sp
+ * (hints: the argc and argv will be pop to x0 x1 registers in trap return) 
+
+ * ## Example
+ * sp -= 8; *(size_t *)sp = argc; (hints: sp can be directly written if current pgdir is the new one)
+ * thisproc()->tf->sp = sp; (hints: Stack pointer must be aligned to 16B!)
+ * The entry point addresses is stored in elf_header.entry
+*/ 
+```
+
+在`execve()`中，一般可执行文件中可以加载的只有两段：RX的部分+RW的部分（其它部分会跳过）（因此只设置两种状态，一种是RX，另一种是RW）
+
+- RX的部分： 代码部分，可以设置一个段为 SWAP+FILE+RO，此时需要“打开”对应的可执行文件，这样才能对其进行引用
+- RW的部分：数据部分，包括了data+bss段，因此没办法分开设置成两个section（WHY？），因此也不能做成file-backed的段（bss段不是file-backed的），可以直接写入物理地址，并设置对应的一个段为 RW
+
+#### copyout（T）
+
+> 复制内容到给定的页表上，在exec中，为了将一个用户地址空间的内容复制到另一个用户地址空间上，可能需要调用这样的函数，
+
+```C
+/*                                        
+ * Copy len bytes from p to user address va in page table pgdir.
+ * Allocate a file descriptor for the given file.
+ * Allocate physical pages if required.
+ * Takes over file reference from caller on success.
+ * Useful when pgdir is not the current page table.
+ * return 0 if success else -1
+ */                                                          
+int copyout(struct pgdir* pd, void* va, void *p, usize len)
+```
+
+## File Mapping (O)
+
+> 本模块内的相关问题推荐联系赵行健助教
+
+本部分为可选内容，请各位同学根据提供的资料自行学习完成。我们提供了用户程序`mmaptest`以测试你的实现。
+
+#### mmap munmap（O）
+
+相关定义`musl/include/sys/mman.h`
+
+> 参考讲解：[彻底理解mmap()_Holy_666的博客-CSDN博客_mmap](https://blog.csdn.net/Holy_666/article/details/86532671)
+> 
+> 参考代码：[XV6学习（15）Lab mmap: Mmap - 星見遥 - 博客园](https://www.cnblogs.com/weijunji/p/xv6-study-15.html)
+
+```C
+void *mmap (void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+int munmap(void *addr, size_t length);
+```
+
+可以利用我们之前实现的 section 数据结构
+
+
 ## Shell
+
+> 本模块内的相关问题推荐联系许冬助教
+
 ### 解释说明
 欢迎来到最后一部分！本部分将决定你的操作系统是否能够真正地运行起来（~~以及你的分数。如果你能顺利完成本部分，你已经超过了大约一半的同学~~）。
 

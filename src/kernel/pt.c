@@ -33,3 +33,12 @@ void vmmap(struct pgdir *pd, u64 va, void *ka, u64 flags) {
     // address 'ka' in page directory 'pd', 'flags' is the flags for the page
     // table entry
 }
+
+/*
+ * Copy len bytes from p to user address va in page table pgdir.
+ * Allocate physical pages if required.
+ * Useful when pgdir is not the current page table.
+ */
+int copyout(struct pgdir *pd, void *va, void *p, usize len) {
+    // TODO
+}
