@@ -1,3 +1,125 @@
+# lab10 Final Lab
+
+本次实验大家将完成最后的整合，实现各种 system call 与最后的 shell。
+
+需要完成的内容中，特殊标记的含义
+
+（T）工具函数，如果使用别的实现可以不写这个
+
+（O）不实现相关功能也可以启动shell，如果时间来不及，请优先保证你能启动shell
+
+## Console
+
+> 本模块内的相关问题推荐联系戴江凡助教。
+
+存在一片内核缓冲区和记录已经被读取的(r)，已经写入的(w)，光标所在正在写的(e)。
+
+```c
+struct {
+    char buf[INPUT_BUF];
+    usize r;  // Read index
+    usize w;  // Write index
+    usize e;  // Edit index
+} input;
+```
+
+数组是环形数组。数组满时不能继续写入。遇到`\n`和`ctrl+D`时将未写入部分变为写入，即更新w到e处。
+
+<u>**TODO**</u> 你需要完成`kernel/console.c`中的下列函数。
+
+### console_intr
+
+处理串口中断。使用`uart_put_char`和`uart_get_char`来完成相关操作。
+
+编辑（写入，`backspace`）缓冲区内容，并回显到console。
+
+使用`uart_get_char`获取串口读入字符，完成下列情况：
+
+1. `backspace`：`\x7f`，删除前一个字符，`input.e--`。但是位于w前的已写入字符不能删除。（思考如何回显出删除的效果）。会用到`uart_put_char('\b')`，效果是光标向左移动一位。
+2. `Ctrl+U`：删除一行。
+3. `Ctrl+D`：更新`input.w`到`input.e`。表示`EOF`。本身也要写入缓冲区和回显。
+4. 普通字符写入和回显。
+
+回显会用到`uart_put_char`向console写入内容。
+
+可以适当自定义`Ctrl+<字母>`，如果有特殊定义，请在报告中说明。
+
+### console_write
+
+```
+isize console_write(Inode *ip, char *buf, isize n)
+```
+
+将`buf`中的内容在console显示。
+
+需要锁`inode ip`。返回n。
+
+### console_read
+
+```
+isize console_read(Inode *ip, char *dst, isize n)
+```
+
+读出console缓冲区的内容n个字符到`dst`。遇见`EOF`提前结束。返回读出的字符数。
+
+
+
+## Pipe
+
+> 本模块内的相关问题推荐联系戴江凡助教。
+
+```c
+typedef struct pipe {
+    SpinLock lock;
+    Semaphore wlock,rlock;
+    char data[PIPESIZE];
+    u32 nread;      // number of bytes read
+    u32 nwrite;     // number of bytes written
+    int readopen;   // read fd is still open
+    int writeopen;  // write fd is still open
+} Pipe;
+```
+
+**<u>TODO</u>** 请完成`fs/pipe.c`中的下列函数。
+
+### pipeAlloc（O）
+
+```
+int pipeAlloc(File** f0, File** f1)
+```
+
+创建`pipe`并初始化，创建`pipe`两端的`File`放入`f0`,`f1`,分别对应读和写。
+
+成功返回0，失败返回-1.
+
+### pipeClose（O）
+
+```
+void pipeClose(Pipe* pi, int writable)
+```
+
+关闭`pipe`的一端。如果检测到两端都关闭，则释放`pipe`空间。
+
+### pipeWrite（O）
+
+```
+int pipeWrite(Pipe* pi, u64 addr, int n)
+```
+
+向`pipe`写入n个byte，如果缓冲区满了则sleep。返回写入的byte数。
+
+### pipeRead（O）
+
+```
+int pipeRead(Pipe* pi, u64 addr, int n)
+```
+
+从`pipe`中读n个byte放入addr中，如果`pipe`为空并且writeopen不为0，则sleep，否则读完pipe，返回读的byte数。
+
+### sysfile.c：pipe2（O）
+
+分配的`pipe`，并将`pipe`的`f0`,`f1`放入第一个参数指向的地址。
+
 ## File Descriptor
 
 > 本模块内的相关问题推荐联系许冬助教
