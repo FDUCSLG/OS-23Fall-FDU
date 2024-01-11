@@ -264,8 +264,8 @@ unsigned char e_ident[EI_NIDENT];
     Elf64_Word    e_flags;
     Elf64_Half    e_ehsize;
     Elf64_Half    e_phentsize;
-       Elf64_Half    e_phnum;
-       Elf64_Half    e_shentsize;
+    Elf64_Half    e_phnum;
+    Elf64_Half    e_shentsize;
     Elf64_Half    e_shnum;
     Elf64_Half    e_shstrndx;
 } Elf64_Ehdr;
@@ -273,7 +273,7 @@ unsigned char e_ident[EI_NIDENT];
 typedef struct {
     Elf64_Word    p_type;
     Elf64_Word    p_flags;
-    Elf64_Off p_offset;
+    Elf64_Off     p_offset;
     Elf64_Addr    p_vaddr;
     Elf64_Addr    p_paddr;
     Elf64_Xword   p_filesz;
@@ -282,7 +282,7 @@ typedef struct {
 } Elf64_Phdr;
 ```
 
-> 注意：ELF 文件中的 section header 和lab的 struct section并不一样，本次实验不用考虑 section header 的情况
+注意：ELF 文件中的 section header 和lab的 struct section并不一样，本次实验不用考虑 section header 的情况
 
 #### fork() 系统调用
 
@@ -294,9 +294,9 @@ typedef struct {
 
 #### execve() 系统调用
 
-> 替换当前进程为filename所指的 ELF 格式文件，并开始运行该文件（变身）
-> 
-> 需要思考进程的哪些部分需要释放，哪些部分不需要
+替换当前进程为filename所指的 ELF 格式文件，并开始运行该文件（变身）
+
+> 进程的哪些部分需要释放，哪些部分不需要？
 
 ```C
 int execve(const char* filename, char* const argv[], char* const envp[]) 
@@ -363,12 +363,12 @@ else
 
 在`execve()`中，一般可执行文件中可以加载的只有两段：RX的部分+RW的部分（其它部分会跳过）（因此只设置两种状态，一种是RX，另一种是RW）
 
-- RX的部分： 代码部分，可以设置一个段为 SWAP+FILE+RO，此时需要“打开”对应的可执行文件，这样才能对其进行引用
-- RW的部分：数据部分，包括了data+bss段，因此没办法分开设置成两个section（WHY？），因此也不能做成file-backed的段（bss段不是file-backed的），可以直接写入物理地址，并设置对应的一个段为 RW
+- RX的部分： 代码部分，主要包括 text 段，属性为 ST_FILE + RO
+- RW的部分：数据部分，包括了 data + bss 段
 
 #### copyout（T）
 
-> 复制内容到给定的页表上，在exec中，为了将一个用户地址空间的内容复制到另一个用户地址空间上，可能需要调用这样的函数，
+> 复制内容到给定的页表上，在exec中，为了将一个用户地址空间的内容复制到另一个用户地址空间上，可能需要调用这样的函数。如果你使用其他实现，则不需要实现这个函数。
 
 ```C
 /*                                        
@@ -386,15 +386,28 @@ int copyout(struct pgdir* pd, void* va, void *p, usize len)
 
 > 本模块内的相关问题推荐联系赵行健助教
 
-本部分为可选内容，请各位同学根据提供的资料自行学习完成。我们提供了用户程序`mmaptest`以测试你的实现。
+### 什么是 `mmap()` ？
+mmap, 从函数名就可以看出来这是memory map, 即内存映射, 是一种内存映射文件的方法, 将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一对映关系。mmap()系统调用使得进程之间通过映射同一个普通文件实现共享内存。普通文件被映射到进程地址空间后，进程可以向访问普通内存一样对文件进行访问，不必再调用read()，write()等操作。
+
+注：实际上，mmap()系统调用并不是完全为了用于共享内存而设计的。它本身提供了不同于一般对普通文件的访问方式，进程可以像读写内存一样对普通文件的操作。而Posix或系统V的共享内存IPC则纯粹用于共享目的，当然mmap()实现共享内存也是其主要应用之一。
+
+### 为什么要用 `mmap()` ？
+Linux通过内存映像机制来提供用户程序对内存直接访问的能力。内存映像的意思是把内核中特定部分的内存空间映射到用户级程序的内存空间去。也就是说，**用户空间和内核空间共享一块相同的内存**。这样做的直观效果显而易见：内核在这块地址内存储变更的任何数据，用户可以立即发现和使用，根本无须数据拷贝。举个例子理解一下，使用mmap方式获取磁盘上的文件信息，只需要将磁盘上的数据拷贝至那块共享内存中去，用户进程可以直接获取到信息，而相对于传统的write/read　IO系统调用, 必须先把数据从磁盘拷贝至到**内核缓冲区中(页缓冲)**，然后再把数据拷贝至用户进程中。两者相比，**mmap会少一次拷贝数据**，这样带来的性能提升是巨大的。
+
+使用内存访问来取代read()和write()系统调用能够简化一些应用程序的逻辑。
+在一些情况下，它能够比使用传统的I/O系统调用执行文件I/O这种做法提供更好的性能。
+原因是：
+
+1. 正常的read()或write()需要两次传输：一次是在文件和内核高速缓冲区之间，另一次是在高速缓冲区和用户空间缓冲区之间。使用mmap()就不需要第二次传输了。对于输入来讲，一旦内核将相应的文件块映射进内存之后，用户进程就能够使用这些数据了；对于输出来讲，用户进程仅仅需要修改内核中的内容，然后可以依靠内核内存管理器来自动更新底层的文件。
+2. 除了节省内核空间和用户空间之间的一次传输之外，mmap()还能够通过减少所需使用的内存来提升性能。当使用read()或write()时，数据将被保存在两个缓冲区中：一个位于用户空间，另个一位于内核空间。当使用mmap()时，内核空间和用户空间会共享同一个缓冲区。此外，如果多个进程正在同一个文件上执行I/O，那么它们通过使用mmap()就能够共享同一个内核缓冲区，从而又能够节省内存的消耗。
+
+本部分为可选内容，我们提供了用户程序`mmaptest`以测试你的实现。
 
 #### mmap munmap（O）
 
 相关定义`musl/include/sys/mman.h`
-
-> 参考讲解：[彻底理解mmap()_Holy_666的博客-CSDN博客_mmap](https://blog.csdn.net/Holy_666/article/details/86532671)
-> 
-> 参考代码：[XV6学习（15）Lab mmap: Mmap - 星見遥 - 博客园](https://www.cnblogs.com/weijunji/p/xv6-study-15.html)
+ 
+参考资料：[XV6学习（15）Lab mmap: Mmap - 星見遥 - 博客园](https://www.cnblogs.com/weijunji/p/xv6-study-15.html)
 
 ```C
 void *mmap (void *addr, size_t length, int prot, int flags, int fd, off_t offset);
