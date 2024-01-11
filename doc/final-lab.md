@@ -431,3 +431,13 @@ int munmap(void *addr, size_t length);
 - [mkdir(1)](https://linux.die.net/man/1/mkdir)：`src/user/mkdir/main.c`
 
 (2) 另外，不要忘了让你的内核启动后自动执行第一行用户态程序 `src/user/init.S`！你需要在 `src/kernel/core.c` 的 `kernel_entry()` 中手动创建并启动第一个用户态进程。
+
+## 测试与提交
+
+编译用户态程序需要先使用`make libc -j`编译musl libc，编译一次后后面即可直接使用。
+
+当你完成全部任务后，如果一切顺利，将进入一个shell，你可以自己运行里面的程序。我们也编写了一个usertests程序可供运行（你可以自己改一改来加强测试）。
+
+请注意助教最终不一定会只使用公布的测试程序来测试你的代码。
+
+**<u>Final Lab的提交时间为1月26日，如有特殊情况请提前联系助教，一般不接受迟交。</u>**
