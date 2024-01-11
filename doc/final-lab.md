@@ -248,7 +248,7 @@ Inode *create(const char *path, short type, short major, short minor, OpContext 
 
 ELF 文件描述了一个程序。它可以看作一个程序的“镜像”，就像ISO文件是一个光盘的“镜像”一样。ELF 文件包含程序的入口地址、各个段的大小、各个段的属性（可读、可写、可执行等）等等。我们按照这些信息，将程序加载到内存中，然后跳转到入口地址，就可以运行这个程序了。
 
-在本部分中，我们需要实现 ELF 文件的解析和加载。ELF 格式的具体定义可以参见 [https://en.wikipedia.org/wiki/Executable_and_Linkable_Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format%EF%BC%8C%E6%8C%89%E7%85%A7) 。在这里，我们给出两个会用到的结构体定义：
+在本部分中，我们需要实现 ELF 文件的解析和加载。ELF 格式的具体定义可以参见 [https://en.wikipedia.org/wiki/Executable_and_Linkable_Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) 。在这里，我们给出两个会用到的结构体定义：
 
 相关头文件：`musl/include/elf.h`
 
