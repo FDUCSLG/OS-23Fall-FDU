@@ -11,7 +11,7 @@ include_directories(../..)
 
 set(compiler_warnings "-Wall -Wextra")
 set(compiler_flags "${compiler_warnings} \
-    -O1 -ftree-pre -g \
+    -O1 -g \
     -fno-omit-frame-pointer \
     -fsanitize=undefined \
     -fno-sanitize=alignment")

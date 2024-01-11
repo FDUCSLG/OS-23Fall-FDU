@@ -15,7 +15,7 @@ set(CMAKE_C_FLAGS "-specs ${LIBC_SPEC_OUT} -std=gnu99  -MMD -MP -static -fno-plt
 set(CMAKE_EXE_LINKER_FLAGS "")
 
 # Add targets here if needed
-set(bin_list cat echo init ls sh mkdir mmaptest usertests mkfs)
+set(bin_list cat echo init ls sh mkdir usertests mkfs)
 
 add_custom_target(user_bin
     DEPENDS ${bin_list})
