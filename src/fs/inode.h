@@ -4,6 +4,7 @@
 #include <common/spinlock.h>
 #include <fs/cache.h>
 #include <fs/defines.h>
+#include <sys/stat.h>
 
 /**
     @brief the number of the root inode (i.e. the inode_no of `/`).
