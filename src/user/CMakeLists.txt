@@ -15,6 +15,7 @@ set(CMAKE_C_FLAGS "-specs ${LIBC_SPEC_OUT} -std=gnu99  -MMD -MP -static -fno-plt
 set(CMAKE_EXE_LINKER_FLAGS "")
 
 # Add targets here if needed
+# Note: you need to add the new executable name to boot/CMakeLists.txt too! Check that
 set(bin_list cat echo init ls sh mkdir usertests mkfs)
 
 add_custom_target(user_bin
