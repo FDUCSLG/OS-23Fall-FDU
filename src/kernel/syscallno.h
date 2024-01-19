@@ -1,10 +1,13 @@
 #pragma once
-
 #include <sys/syscall.h>
 
+#define SYS_yield 124
 #define SYS_myreport 499
 #define SYS_pstat 500
 #define SYS_sbrk 12
+#define SYS_brk 214
+#define SYS_mprotect 226
+#define SYS_getpid 172
 
 #define SYS_clone 220
 #define SYS_myexit 457
