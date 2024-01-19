@@ -40,7 +40,7 @@
 >
 > 主要原因是：普通程序的异常是「自产自销」的，而内核程序的异常往往是「外来的」（不管是其他硬件还是用户进程），起到的是「兜底」的作用，不能随意改变异常处的程序流。
 > 
-> 其实，学术界早已开始探索在普通编程语言中引入「暂停现场-处理-恢复现场」的机制，有个专门术语来指代之：[代数效应（Algebraic Effects）](https://overreacted.io/zh-hans/algebraic-effects-for-the-rest-of-us/)。对编译理论感兴趣的同学可以自行了解。
+> 其实，学术上早已开始探索在普通编程语言中引入「暂停现场-处理-恢复现场」的机制，有个专门术语来指代之：[代数效应（Algebraic Effects）](https://github.com/gaearon/overreacted.io/blob/archive/src/pages/algebraic-effects-for-the-rest-of-us/index.zh-hans.md)。对编译理论感兴趣的同学可以自行了解。
  
 ## 2. 中断向量表
 对于各种异常情况，我们需要给处理器分别指定一个处理程序，而这个处理程序的地址需要被存放在某个固定的位置，这个位置就是**中断向量表（Interrupt Vector Table）**。
