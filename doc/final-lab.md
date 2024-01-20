@@ -347,12 +347,9 @@ else
  *   |    ....     |
  *   +-------------+
  *   |   argv[0]   |
-     +-------------+
-     |    argv     | pointer to the argv[0]
  *   +-------------+
  *   |    argc     |
  *   +-------------+  <== sp
- * (hints: the argc and argv will be pop to x0 x1 registers in trap return) 
 
  * ## Example
  * sp -= 8; *(size_t *)sp = argc; (hints: sp can be directly written if current pgdir is the new one)
